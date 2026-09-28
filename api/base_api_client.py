@@ -1,5 +1,5 @@
 class BaseApiClient:
-    def __init__(self, session, base_url, timeout=(3, 15)):
+    def __init__(self, session, base_url, timeout=(10, 25)):
         self.session = session
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout

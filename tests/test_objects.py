@@ -1,14 +1,12 @@
 import pytest
 
-from api.objects_api import create_object, get_object, update_object, delete_object
 from utils.data_loader import load_json
 
-def test_update_object_name(api_client, objects_client, created_object):
+def test_update_object_name(objects_client, created_object):
     object_id = created_object["id"]
     new_name = "Updated QA Object"
 
-    response = update_object(
-        api_client,
+    response = objects_client.update_object(
         object_id,
         {"name": new_name},
     )
@@ -24,8 +22,8 @@ def test_update_object_name(api_client, objects_client, created_object):
 objects = load_json("data/objects.json")
 
 @pytest.mark.parametrize("payload", objects)
-def test_create_object(api_client, payload):
-    response = create_object(api_client, payload)
+def test_create_object(objects_client, payload):
+    response = objects_client.create_object(payload)
     assert response.status_code == 200, response.text
 
     created_object = response.json()
@@ -36,14 +34,14 @@ def test_create_object(api_client, payload):
         assert created_object["name"] == payload["name"]
         assert created_object["data"] == payload["data"]
     finally:
-        delete_response = delete_object(api_client, object_id)
+        delete_response = objects_client.delete_object(object_id)
         assert delete_response.status_code in (200, 204), (
             f"Could not delete object {object_id}: "
             f"{delete_response.status_code} {delete_response.text}"
         )
 
-def test_get_nonexistent_object(api_client):
-    response = get_object(api_client, "qa-object-that-does-not-exist-999999")
+def test_get_nonexistent_object(objects_client):
+    response = objects_client.get_object("qa-object-that-does-not-exist-999999")
 
     assert response.status_code == 404, (
         f"Expected 404, got {response.status_code}"
