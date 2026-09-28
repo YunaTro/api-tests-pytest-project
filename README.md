@@ -1,6 +1,6 @@
 # REST API Tests with Pytest
 
-Automated tests for the public [RESTful API](https://restful-api.dev/). The project covers reading objects, creating objects from JSON test data, updating them with PATCH, and checking the response for a nonexistent object.
+Automated tests for the authenticated [RESTful API](https://restful-api.dev/). The project covers reading objects, creating objects from JSON test data, updating them with PATCH, and checking the response for a nonexistent object.
 
 ## Tech stack
 
@@ -23,7 +23,7 @@ cp .env.example .env
 Check that `.env` contains the API address:
 
 ```env
-BASE_URL=https://api.restful-api.dev
+BASE_URL=https://api.restful-api.dev/collections/{collectionName}
 ```
 
 ## Run the tests
