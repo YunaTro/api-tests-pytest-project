@@ -1,11 +1,15 @@
 import pytest
 import requests
 
-from api.objects_api import create_object, delete_object
+from config import BASE_URL, X_API_KEY
+from api.objects_api import create_object, delete_object, ObjectsApiClient
 
 @pytest.fixture(scope="session")
 def api_client():
     with requests.Session() as session:
+        session.headers.update({
+            "x-api-key": X_API_KEY
+        })
         yield session
 
 @pytest.fixture
@@ -29,3 +33,7 @@ def created_object(api_client):
             f"Could not delete object {object_id}: "
             f"{delete_response.status_code} {delete_response.text}"
         )
+
+@pytest.fixture
+def objects_client(api_client):
+    return ObjectsApiClient(api_client, BASE_URL, timeout=(3, 15))

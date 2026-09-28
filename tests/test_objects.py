@@ -3,8 +3,7 @@ import pytest
 from api.objects_api import create_object, get_object, update_object, delete_object
 from utils.data_loader import load_json
 
-
-def test_update_object_name(api_client, created_object):
+def test_update_object_name(api_client, objects_client, created_object):
     object_id = created_object["id"]
     new_name = "Updated QA Object"
 
@@ -17,7 +16,7 @@ def test_update_object_name(api_client, created_object):
     assert response.status_code == 200, response.text
     assert response.json()["name"] == new_name
 
-    get_response = get_object(api_client, object_id)
+    get_response = objects_client.get_object(object_id)
     assert get_response.status_code == 200
     assert get_response.json()["name"] == new_name
 
