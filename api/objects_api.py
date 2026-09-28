@@ -1,4 +1,3 @@
-from config import BASE_URL
 from api.base_api_client import BaseApiClient
 
 class ObjectsApiClient(BaseApiClient):
