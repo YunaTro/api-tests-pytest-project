@@ -1,5 +1,6 @@
 import pytest
 
+from models.object_response import ObjectResponse
 from utils.data_loader import load_json
 
 def test_update_object_name(objects_client, created_object):
@@ -12,11 +13,13 @@ def test_update_object_name(objects_client, created_object):
     )
 
     assert response.status_code == 200, response.text
-    assert response.json()["name"] == new_name
+    obj = ObjectResponse.model_validate(response.json(), strict=True)
+    assert obj.name == new_name
 
     get_response = objects_client.get_object(object_id)
     assert get_response.status_code == 200
-    assert get_response.json()["name"] == new_name
+    get_obj = ObjectResponse.model_validate(get_response.json(), strict=True)
+    assert get_obj.name == new_name
 
 
 objects = load_json("data/objects.json")
@@ -26,13 +29,13 @@ def test_create_object(objects_client, payload):
     response = objects_client.create_object(payload)
     assert response.status_code == 200, response.text
 
-    created_object = response.json()
-    object_id = created_object.get("id")
-    assert object_id, f"Response has no object ID: {created_object}"
+    response_data = response.json()
+    object_id = response_data["id"]
 
     try:
-        assert created_object["name"] == payload["name"]
-        assert created_object["data"] == payload["data"]
+        created_object = ObjectResponse.model_validate(response_data, strict=True)
+        assert created_object.name == payload["name"]
+        assert created_object.data.model_dump() == payload["data"]
     finally:
         delete_response = objects_client.delete_object(object_id)
         assert delete_response.status_code in (200, 204), (
