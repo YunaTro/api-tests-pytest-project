@@ -1,29 +1,50 @@
 import pytest
 import allure
 
+from requests.exceptions import HTTPError
+
 from models.object_response import ObjectResponse
 from utils.data_loader import load_json
 
 from helpers.allure_helpers import attach_json, attach_response
 from helpers.assertions import assert_status_code
 
+@allure.feature("Objects API")
+@allure.story("Update object")
+@allure.severity(allure.severity_level.CRITICAL)
+@allure.title("Updated object contains patched data")
 def test_update_object_name(objects_client, created_object):
     object_id = created_object.id
-    new_name = "Updated QA Object"
+    with allure.step("Send request to update object"):
+        new_name = "Updated QA Object"
+        payload = {"name": new_name}
+        attach_json(payload, "Request Body")
+        response = objects_client.update_object(object_id, payload)
+        attach_response(response)
 
-    response = objects_client.update_object(
-        object_id,
-        {"name": new_name},
-    )
+    assert_status_code(response, 200)
 
-    assert response.status_code == 200, response.text
-    obj = ObjectResponse.model_validate(response.json(), strict=True)
-    assert obj.name == new_name
+    with allure.step("Validate the update response schema"):
+        obj = ObjectResponse.model_validate(response.json(), strict=True)
+    
+    with allure.step("Check updated name and unchanged fields"):
+        assert obj.id == object_id
+        assert obj.name == new_name
+        assert obj.data.model_dump() == created_object.data.model_dump()
 
-    get_response = objects_client.get_object(object_id)
-    assert get_response.status_code == 200
-    get_obj = ObjectResponse.model_validate(get_response.json(), strict=True)
-    assert get_obj.name == new_name
+    with allure.step("Send request to get the updated object"):
+        get_response = objects_client.get_object(object_id)
+        attach_response(get_response)
+
+    assert_status_code(get_response, 200)
+
+    with allure.step("Validate the get response schema"):
+        get_obj = ObjectResponse.model_validate(get_response.json(), strict=True)
+    
+    with allure.step("Check that the update was persisted"):
+        assert get_obj.id == object_id
+        assert get_obj.name == new_name
+        assert get_obj.data.model_dump() == created_object.data.model_dump()
 
 
 objects = load_json("data/objects.json")
@@ -61,12 +82,22 @@ def test_create_object(objects_client, payload):
                     f"{delete_response.status_code} {delete_response.text}"
                 )
 
+@allure.feature("Objects API")
+@allure.story("Read object")
+@allure.severity(allure.severity_level.NORMAL)
+@allure.title("Nonexistent object can not be found")
 def test_get_nonexistent_object(objects_client):
-    response = objects_client.get_object("qa-object-that-does-not-exist-999999")
+    with allure.step("Get nonexistent object"):
+        response = objects_client.get_object("qa-object-that-does-not-exist-999999")
+        attach_response(response)
 
-    assert response.status_code == 404, (
-        f"Expected 404, got {response.status_code}"
-    )
+    assert_status_code(response, 404)
+
+    with allure.step("Check that an error response raises HTTPError"):
+        with pytest.raises(HTTPError) as exc_info:
+            response.raise_for_status()
+
+        assert exc_info.value.response is response
 
 @allure.feature("Objects API")
 @allure.story("Read object")

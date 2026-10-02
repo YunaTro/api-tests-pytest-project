@@ -9,6 +9,7 @@ from helpers.assertions import assert_status_code
 from models.object_response import ObjectResponse
 
 
+@allure.title("Configure API session")
 @pytest.fixture
 def api_client():
     with requests.Session() as session:
